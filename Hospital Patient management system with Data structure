@@ -1,0 +1,177 @@
+#include <iostream>
+#include <queue>
+#include <stack>
+#include <string>
+#include <map>
+
+using namespace std;
+
+struct Patient {
+    int id;
+    string name;
+    int age;
+    string contact;
+    int priority; 
+};
+
+struct ComparePriority {
+    bool operator()(Patient const &p1, Patient const &p2) {
+        return p1.priority > p2.priority; 
+    }
+};
+
+class PatientQueue {
+private:
+    queue<Patient> registrationQueue;
+
+public:
+    void registerPatient(int id, string name, int age, string contact) {
+        Patient patient = {id, name, age, contact, 3}; 
+        registrationQueue.push(patient);
+        cout << "Patient " << name << " registered.\n";
+    }
+
+    Patient nextPatient() {
+        if (!registrationQueue.empty()) {
+            Patient patient = registrationQueue.front();
+            registrationQueue.pop();
+            return patient;
+        } else {
+            cout << "No patients in the registration queue.\n";
+            return {};
+        }
+    }
+};
+
+class PatientTreatment {
+private:
+    priority_queue<Patient, vector<Patient>, ComparePriority> treatmentQueue;
+
+public:
+    void addPatientToTreatment(int id, string name, int priority) {
+        Patient patient = {id, name, 0, "", priority}; 
+        treatmentQueue.push(patient);
+        cout << "Patient " << name << " added to treatment queue with priority " << priority << ".\n";
+    }
+
+    Patient treatNextPatient() {
+        if (!treatmentQueue.empty()) {
+            Patient patient = treatmentQueue.top();
+            treatmentQueue.pop();
+            cout << "Treating patient " << patient.name << " (Priority: " << patient.priority << ").\n";
+            return patient;
+        } else {
+            cout << "No patients in the treatment queue.\n";
+            return {};
+        }
+    }
+};
+
+class PatientDischarge {
+private:
+    stack<Patient> dischargeStack;
+
+public:
+    void dischargePatient(Patient patient) {
+        dischargeStack.push(patient);
+        cout << "Patient " << patient.name << " discharged.\n";
+    }
+
+    Patient recentDischarge() {
+        if (!dischargeStack.empty()) {
+            Patient patient = dischargeStack.top();
+            dischargeStack.pop();
+            cout << "Most recent discharged patient: " << patient.name << ".\n";
+            return patient;
+        } else {
+            cout << "No patients in the discharge stack.\n";
+            return {};
+        }
+    }
+};
+
+class PatientSearchTree {
+private:
+    struct TreeNode {
+        Patient patient;
+        TreeNode *left;
+        TreeNode *right;
+        TreeNode(Patient p) : patient(p), left(nullptr), right(nullptr) {}
+    };
+
+    TreeNode* root;
+
+    TreeNode* insert(TreeNode* node, Patient patient) {
+        if (!node) return new TreeNode(patient);
+        if (patient.id < node->patient.id)
+            node->left = insert(node->left, patient);
+        else
+            node->right = insert(node->right, patient);
+        return node;
+    }
+
+    void searchByName(TreeNode* node, const string& name) {
+        if (!node) return;
+        if (node->patient.name == name) {
+            cout << "Patient found: ID=" << node->patient.id << ", Name=" << node->patient.name << ", Age=" << node->patient.age << "\n";
+        }
+        searchByName(node->left, name);
+        searchByName(node->right, name);
+    }
+
+    void searchByID(TreeNode* node, int id) {
+        if (!node) return;
+        if (node->patient.id == id) {
+            cout << "Patient found: ID=" << node->patient.id << ", Name=" << node->patient.name << ", Age=" << node->patient.age << "\n";
+            return;
+        } else if (id < node->patient.id) {
+            searchByID(node->left, id);
+        } else {
+            searchByID(node->right, id);
+        }
+    }
+
+public:
+    PatientSearchTree() : root(nullptr) {}
+
+    void insertPatient(Patient patient) {
+        root = insert(root, patient);
+    }
+
+    void searchPatientByName(const string& name) {
+        searchByName(root, name);
+    }
+
+    void searchPatientByID(int id) {
+        searchByID(root, id);
+    }
+};
+
+int main() {
+    PatientQueue pq;
+    PatientTreatment pt;
+    PatientDischarge pd;
+    PatientSearchTree pst;
+
+    pq.registerPatient(1, "Mafruda", 21, "01892669014");
+    pq.registerPatient(2, "Sanjana", 21, "01887654321");
+
+    Patient p1 = pq.nextPatient();
+    pt.addPatientToTreatment(p1.id, p1.name, 2); 
+
+    Patient p2 = pq.nextPatient();
+    pt.addPatientToTreatment(p2.id, p2.name, 1); 
+
+    Patient treatedPatient = pt.treatNextPatient();
+    pd.dischargePatient(treatedPatient);
+
+    treatedPatient = pt.treatNextPatient();
+    pd.dischargePatient(treatedPatient);
+
+    pst.insertPatient({1, "Mafruda", 21, "01892669014", 2});
+    pst.insertPatient({2, "Sanjana", 21, "01887654321", 1});
+    pst.searchPatientByName("Mafruda");
+    pst.searchPatientByID(2);
+
+    return 0;
+}
